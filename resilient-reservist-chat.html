@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Resilient Reservist Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --olive: #4a5240;
+    --olive-light: #6b7260;
+    --olive-dark: #2e3328;
+    --tan: #c8b99a;
+    --tan-light: #e8ddd0;
+    --tan-lighter: #f5f0ea;
+    --cream: #faf7f2;
+    --ink: #1c1f18;
+    --ink-muted: #4a4d45;
+    --gold: #b8972a;
+    --gold-light: #d4b44a;
+    --danger: #8b3a3a;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+  }
+
+  .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background:
+      radial-gradient(ellipse at 10% 0%, rgba(74,82,64,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 90% 100%, rgba(184,151,42,0.06) 0%, transparent 50%),
+      var(--cream);
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 680px;
+    padding: 2.5rem 1.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+  }
+
+  .header::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+    margin: 1.25rem auto 0;
+  }
+
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--olive-dark);
+    color: var(--tan-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+
+  .rank-badge::before {
+    content: '★';
+    color: var(--gold-light);
+    font-size: 9px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    letter-spacing: 0.06em;
+    color: var(--olive-dark);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 0.95rem;
+    color: var(--olive-light);
+    margin-top: 0.5rem;
+  }
+
+  /* CHAT CONTAINER */
+  .chat-wrap {
+    width: 100%;
+    max-width: 680px;
+    padding: 0 1rem 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-box {
+    background: #fff;
+    border: 1px solid rgba(74,82,64,0.15);
+    border-radius: 4px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 420px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px rgba(46,51,40,0.07);
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--tan); border-radius: 2px; }
+
+  /* MESSAGES */
+  .msg {
+    display: flex;
+    gap: 10px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .avatar.bot {
+    background: var(--olive-dark);
+    color: var(--tan-light);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+
+  .avatar.user-av {
+    background: var(--tan-light);
+    color: var(--olive-dark);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .bubble {
+    max-width: 78%;
+    padding: 0.75rem 1rem;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .msg.bot .bubble {
+    background: var(--tan-lighter);
+    color: var(--ink);
+    border-left: 3px solid var(--olive);
+  }
+
+  .msg.user .bubble {
+    background: var(--olive-dark);
+    color: var(--tan-light);
+    border-right: 3px solid var(--gold);
+  }
+
+  /* TYPING INDICATOR */
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--tan-lighter);
+    border-left: 3px solid var(--olive);
+    border-radius: 3px;
+    width: fit-content;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    background: var(--olive);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* SUGGESTION CHIPS */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 1.5rem 1rem;
+  }
+
+  .chip {
+    background: transparent;
+    border: 1px solid rgba(74,82,64,0.3);
+    color: var(--olive);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    background: var(--olive-dark);
+    border-color: var(--olive-dark);
+    color: var(--tan-light);
+  }
+
+  /* INPUT AREA */
+  .input-area {
+    border-top: 1px solid rgba(74,82,64,0.12);
+    padding: 1rem 1.25rem;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: #fff;
+  }
+
+  textarea {
+    flex: 1;
+    border: 1px solid rgba(74,82,64,0.2);
+    border-radius: 3px;
+    padding: 0.6rem 0.85rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--cream);
+    resize: none;
+    outline: none;
+    min-height: 42px;
+    max-height: 120px;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+
+  textarea:focus { border-color: var(--olive); }
+  textarea::placeholder { color: var(--olive-light); opacity: 0.6; }
+
+  .send-btn {
+    background: var(--olive-dark);
+    color: var(--tan-light);
+    border: none;
+    border-radius: 3px;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .send-btn:hover { background: var(--olive); }
+  .send-btn:active { transform: scale(0.95); }
+  .send-btn:disabled { background: var(--tan); cursor: not-allowed; }
+
+  .send-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  /* FOOTER */
+  .footer {
+    font-size: 0.72rem;
+    color: var(--olive-light);
+    text-align: center;
+    padding: 0.75rem 1rem 1.5rem;
+    opacity: 0.7;
+  }
+
+  .error-msg {
+    color: var(--danger);
+    font-size: 0.82rem;
+    padding: 0.5rem 1.5rem;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <div class="rank-badge">AI Assistant</div>
+    <h1>The Resilient Reservist</h1>
+    <p class="subtitle">Your guide to strength, stability & military resilience</p>
+  </header>
+
+  <div class="chat-wrap">
+    <div class="chat-box">
+      <div class="messages" id="messages"></div>
+      <div class="chips" id="chips">
+        <button class="chip" onclick="sendChip(this)">What is resilience training?</button>
+        <button class="chip" onclick="sendChip(this)">Tips for managing stress</button>
+        <button class="chip" onclick="sendChip(this)">How do I get the book?</button>
+        <button class="chip" onclick="sendChip(this)">Family resilience activities</button>
+      </div>
+      <div class="input-area">
+        <textarea id="userInput" placeholder="Ask anything about resilience, the book, or military life…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="error-msg" id="errorMsg" style="display:none"></p>
+  </div>
+
+  <footer class="footer">
+    Powered by AI · The Resilient Reservist · rpstrr.com
+  </footer>
+
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are the Resilient Reservist Assistant — a warm, knowledgeable, and encouraging AI guide for military reservists, veterans, and their families. You are based on the book "The Resilient Reservist: 30 Days to Strength and Stability" which draws on over 8 years of U.S. Army Master Resilience Training (MRT).
+
+Your role is to:
+- Help reservists, veterans, and families build mental, physical, emotional, and social resilience
+- Answer questions about the book and how to get it (available on Amazon as Kindle, Paperback, and Audible audiobook; search "The Resilient Reservist: 30 Days to Strength and Stability" on Amazon or Audible)
+- Share practical resilience tips, coping strategies, and encouragement rooted in MRT principles
+- Provide supportive guidance on challenges like transitioning between military and civilian life, managing stress, family connection, and building purpose
+- Point people to the free Family Activity Book (available via the contact form at rpstrr.com)
+
+Tone: Warm, direct, encouraging, grounded. Think of a trusted senior NCO who also deeply cares about wellbeing. Never clinical or cold. Use plain language. Keep answers concise but meaningful.
+
+If someone seems in crisis or mentions self-harm, gently and compassionately encourage them to reach out to the Veterans Crisis Line (call or text 988, then press 1) or a trusted person in their life.
+
+Always stay focused on resilience, the book, military/veteran life, and family wellbeing. For unrelated topics, kindly redirect.`;
+
+let history = [];
+let isLoading = false;
+
+function addMessage(role, text) {
+  const messages = document.getElementById('messages');
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${role === 'bot' ? 'bot' : 'user-av'}`;
+  avatar.textContent = role === 'bot' ? 'RR' : 'YOU';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function showTyping() {
+  const messages = document.getElementById('messages');
+  const msg = document.createElement('div');
+  msg.className = 'msg bot';
+  msg.id = 'typing';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar bot';
+  avatar.textContent = 'RR';
+
+  const indicator = document.createElement('div');
+  indicator.className = 'typing-indicator';
+  indicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+
+  msg.appendChild(avatar);
+  msg.appendChild(indicator);
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function hideChips() {
+  document.getElementById('chips').style.display = 'none';
+}
+
+async function sendMessage(overrideText) {
+  if (isLoading) return;
+  const input = document.getElementById('userInput');
+  const text = overrideText || input.value.trim();
+  if (!text) return;
+
+  hideChips();
+  input.value = '';
+  input.style.height = 'auto';
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', text);
+  history.push({ role: 'user', content: text });
+
+  showTyping();
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: history
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'API error');
+    }
+
+    const reply = data.content.map(b => b.text || '').join('');
+    removeTyping();
+    addMessage('bot', reply);
+    history.push({ role: 'assistant', content: reply });
+
+  } catch (err) {
+    removeTyping();
+    showError('Something went wrong. Please try again in a moment.');
+    console.error(err);
+    history.pop();
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function sendChip(btn) {
+  sendMessage(btn.textContent);
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// Welcome message
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    addMessage('bot', "Hello, and welcome to the Resilient Reservist Hub! I'm here to help you build strength and stability — whether you have questions about the book, resilience strategies, or navigating military and civilian life. What's on your mind today?");
+  }, 400);
+});
+</script>
+</body>
+</html>
